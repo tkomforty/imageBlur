@@ -188,6 +188,14 @@
                     </div>
                     <input id="contrast-slider" type="range" min="0" max="200" step="1" value="100">
                 </div>
+                 <!-- Brightness Control -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label for="brightness-slider" class="block text-sm font-medium text-gray-700">Brightness</label>
+                        <span id="brightness-value" class="text-sm font-mono text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-300">100%</span>
+                    </div>
+                    <input id="brightness-slider" type="range" min="0" max="200" step="1" value="100">
+                </div>
             </div>
         </div>
 
@@ -221,12 +229,14 @@
         const hueSlider = document.getElementById('hue-slider');
         const saturationSlider = document.getElementById('saturation-slider');
         const contrastSlider = document.getElementById('contrast-slider');
+        const brightnessSlider = document.getElementById('brightness-slider');
         const radiusValue = document.getElementById('radius-value');
         const opacityValue = document.getElementById('opacity-value');
         const blurValue = document.getElementById('blur-value');
         const hueValue = document.getElementById('hue-value');
         const saturationValue = document.getElementById('saturation-value');
         const contrastValue = document.getElementById('contrast-value');
+        const brightnessValue = document.getElementById('brightness-value');
         
         const ctx = canvas.getContext('2d');
         
@@ -246,7 +256,7 @@
             updateControlState();
             updateAndRedraw();
         });
-        [radiusSlider, opacitySlider, blurSlider, hueSlider, saturationSlider, contrastSlider].forEach(slider => {
+        [radiusSlider, opacitySlider, blurSlider, hueSlider, saturationSlider, contrastSlider, brightnessSlider].forEach(slider => {
             slider.addEventListener('input', updateAndRedraw);
         });
 
@@ -313,7 +323,8 @@
                 blur: parseInt(blurSlider.value),
                 hue: parseInt(hueSlider.value),
                 saturation: parseInt(saturationSlider.value),
-                contrast: parseInt(contrastSlider.value)
+                contrast: parseInt(contrastSlider.value),
+                brightness: parseInt(brightnessSlider.value)
             };
             
             radiusValue.textContent = params.radius.toFixed(2);
@@ -322,13 +333,14 @@
             hueValue.textContent = `${params.hue}°`;
             saturationValue.textContent = `${params.saturation}%`;
             contrastValue.textContent = `${params.contrast}%`;
+            brightnessValue.textContent = `${params.brightness}%`;
 
             const selectedAlgo = document.querySelector('input[name="algorithm"]:checked').value;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Set all filters at once for better performance
-            ctx.filter = `blur(${params.blur}px) saturate(${params.saturation}%) hue-rotate(${params.hue}deg) contrast(${params.contrast}%)`;
+            ctx.filter = `blur(${params.blur}px) saturate(${params.saturation}%) hue-rotate(${params.hue}deg) contrast(${params.contrast}%) brightness(${params.brightness}%)`;
 
             switch (selectedAlgo) {
                 case 'radial':
