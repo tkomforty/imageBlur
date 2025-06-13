@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Gradient Backdrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-file-upload {
+            border: 2px dashed #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            width: 100%;
+            height: 200px;
+        }
+        .custom-file-upload:hover {
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+        }
+        /* Custom styles for range sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+        input[type="range"]:disabled::-webkit-slider-thumb {
+            background: #9ca3af;
+        }
+        input[type="range"]:disabled::-moz-range-thumb {
+            background: #9ca3af;
+        }
+        /* Custom radio button styling */
+        .algo-label {
+            display: inline-block;
+            background-color: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-weight: 500;
+            color: #374151;
+            user-select: none;
+        }
+        .algo-input:checked + .algo-label {
+            background-color: #4f46e5;
+            color: #fff;
+            border-color: #4f46e5;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Image to Gradient Backdrop</h1>
+        <p class="text-center text-gray-500 mb-8">Upload an image and use the controls to create a unique gradient.</p>
+
+        <!-- File Upload Area -->
+        <div id="upload-area" class="text-center">
+            <label for="image-upload" class="custom-file-upload" id="upload-label">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                </div>
+            </label>
+            <input id="image-upload" type="file" class="hidden" accept="image/*">
+        </div>
+
+        <!-- Canvas and Controls -->
+        <div id="canvas-container" class="hidden w-full aspect-video mx-auto mt-8 relative">
+            <canvas id="gradient-canvas" class="w-full h-full rounded-lg shadow-md"></canvas>
+            <div id="loading-spinner" class="hidden absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Generator Controls -->
+        <div id="generator-controls" class="hidden mt-6 p-6 bg-gray-50 rounded-lg border border-gray-200 space-y-6">
+            <h3 class="text-lg font-medium text-gray-800 text-center -mb-2">Creative Controls</h3>
+             <!-- Algorithm Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 text-center mb-3">Algorithm</label>
+                <div id="algorithm-selector" class="flex flex-wrap justify-center items-center gap-2">
+                    <input type="radio" id="algo-radial" name="algorithm" value="radial" class="sr-only algo-input" checked>
+                    <label for="algo-radial" class="algo-label">Soft Radial</label>
+                    
+                    <input type="radio" id="algo-linear" name="algorithm" value="linear" class="sr-only algo-input">
+                    <label for="algo-linear" class="algo-label">Linear</label>
+                    
+                    <input type="radio" id="algo-stretch" name="algorithm" value="stretch" class="sr-only algo-input">
+                    <label for="algo-stretch" class="algo-label">Pixel Stretch</label>
+
+                    <input type="radio" id="algo-blur" name="algorithm" value="blur" class="sr-only algo-input">
+                    <label for="algo-blur" class="algo-label">Full Blur</label>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                <!-- Spread Control -->
+                <div id="radius-control" class="space-y-2 transition-opacity duration-300">
+                    <div class="flex justify-between items-center">
+                        <label for="radius-slider" class="block text-sm font-medium text-gray-700">Spread</label>
+                        <span id="radius-value" class="text-sm font-mono text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-300">0.80</span>
+                    </div>
+                    <input id="radius-slider" type="range" min="0.2" max="2.0" step="0.05" value="0.8">
+                </div>
+                <!-- Opacity Control -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label for="opacity-slider" class="block text-sm font-medium text-gray-700">Opacity</label>
+                        <span id="opacity-value" class="text-sm font-mono text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-300">1.00</span>
+                    </div>
+                    <input id="opacity-slider" type="range" min="0.0" max="1.0" step="0.05" value="1.0">
+                </div>
+                <!-- Blur Control -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label for="blur-slider" class="block text-sm font-medium text-gray-700">Blur</label>
+                        <span id="blur-value" class="text-sm font-mono text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-300">20px</span>
+                    </div>
+                    <input id="blur-slider" type="range" min="0" max="100" step="1" value="20">
+                </div>
+                <!-- Hue Control -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label for="hue-slider" class="block text-sm font-medium text-gray-700">Hue</label>
+                        <span id="hue-value" class="text-sm font-mono text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-300">0°</span>
+                    </div>
+                    <input id="hue-slider" type="range" min="0" max="360" step="1" value="0">
+                </div>
+                <!-- Saturation Control -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label for="saturation-slider" class="block text-sm font-medium text-gray-700">Saturation</label>
+                        <span id="saturation-value" class="text-sm font-mono text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-300">100%</span>
+                    </div>
+                    <input id="saturation-slider" type="range" min="0" max="200" step="1" value="100">
+                </div>
+            </div>
+        </div>
+
+        <div id="controls" class="hidden text-center mt-6 space-x-4">
+             <button id="download-btn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+                Download
+            </button>
+             <button id="new-image-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50">
+                Upload New Image
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const imageUpload = document.getElementById('image-upload');
+        const uploadArea = document.getElementById('upload-area');
+        const uploadLabel = document.getElementById('upload-label');
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvas = document.getElementById('gradient-canvas');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const controls = document.getElementById('controls');
+        const downloadBtn = document.getElementById('download-btn');
+        const newImageBtn = document.getElementById('new-image-btn');
+        const generatorControls = document.getElementById('generator-controls');
+        const algorithmSelector = document.getElementById('algorithm-selector');
+        const radiusSlider = document.getElementById('radius-slider');
+        const radiusControl = document.getElementById('radius-control');
+        const opacitySlider = document.getElementById('opacity-slider');
+        const blurSlider = document.getElementById('blur-slider');
+        const hueSlider = document.getElementById('hue-slider');
+        const saturationSlider = document.getElementById('saturation-slider');
+        const radiusValue = document.getElementById('radius-value');
+        const opacityValue = document.getElementById('opacity-value');
+        const blurValue = document.getElementById('blur-value');
+        const hueValue = document.getElementById('hue-value');
+        const saturationValue = document.getElementById('saturation-value');
+        
+        const ctx = canvas.getContext('2d');
+        
+        // State variables
+        let lastImage = null;
+        let sampledColors = [];
+        let tempImageCanvas = document.createElement('canvas');
+        let tempImageCtx = tempImageCanvas.getContext('2d');
+
+        // --- Event Listeners ---
+        imageUpload.addEventListener('change', handleImageUpload);
+        downloadBtn.addEventListener('click', downloadCanvas);
+        newImageBtn.addEventListener('click', resetUI);
+
+        // Control Listeners
+        algorithmSelector.addEventListener('change', () => {
+            updateControlState();
+            updateAndRedraw();
+        });
+        [radiusSlider, opacitySlider, blurSlider, hueSlider, saturationSlider].forEach(slider => {
+            slider.addEventListener('input', updateAndRedraw);
+        });
+
+        // Drag and Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+            uploadLabel.addEventListener(e, preventDefaults, false);
+            document.body.addEventListener(e, preventDefaults, false);
+        });
+        ['dragenter', 'dragover'].forEach(e => {
+            uploadLabel.addEventListener(e, () => uploadLabel.classList.add('bg-gray-100', 'border-indigo-500'), false);
+        });
+        ['dragleave', 'drop'].forEach(e => {
+            uploadLabel.addEventListener(e, () => uploadLabel.classList.remove('bg-gray-100', 'border-indigo-500'), false);
+        });
+        uploadLabel.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        function handleDrop(e) {
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                imageUpload.files = files;
+                handleImageUpload({ target: imageUpload });
+            }
+        }
+
+        // --- Core Functions ---
+        
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file || !file.type.startsWith('image/')) { return; }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    lastImage = img;
+                    showLoading();
+                    setTimeout(() => {
+                        processImage(img);
+                        hideLoading();
+                        showCanvasAndControls();
+                    }, 50);
+                }
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function processImage(img) {
+            canvas.width = 1920;
+            canvas.height = 1080;
+            tempImageCanvas.width = img.width;
+            tempImageCanvas.height = img.height;
+            tempImageCtx.drawImage(img, 0, 0);
+            sampledColors = getSampledColors(tempImageCtx, img.width, img.height);
+            updateAndRedraw();
+        }
+        
+        function updateAndRedraw() {
+            if (!lastImage) return;
+
+            const params = {
+                radius: parseFloat(radiusSlider.value),
+                opacity: parseFloat(opacitySlider.value),
+                blur: parseInt(blurSlider.value),
+                hue: parseInt(hueSlider.value),
+                saturation: parseInt(saturationSlider.value)
+            };
+            
+            radiusValue.textContent = params.radius.toFixed(2);
+            opacityValue.textContent = params.opacity.toFixed(2);
+            blurValue.textContent = `${params.blur}px`;
+            hueValue.textContent = `${params.hue}°`;
+            saturationValue.textContent = `${params.saturation}%`;
+
+            const selectedAlgo = document.querySelector('input[name="algorithm"]:checked').value;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set all filters at once
+            ctx.filter = `blur(${params.blur}px) saturate(${params.saturation}%) hue-rotate(${params.hue}deg)`;
+
+            switch (selectedAlgo) {
+                case 'radial':
+                    drawRadialAlgorithm(ctx, canvas.width, canvas.height, params);
+                    break;
+                case 'linear':
+                    drawLinearAlgorithm(ctx, canvas.width, canvas.height, params);
+                    break;
+                case 'stretch':
+                    drawStretchAlgorithm(ctx, canvas.width, canvas.height, params);
+                    break;
+                case 'blur':
+                    drawFullBlurAlgorithm(ctx, canvas.width, canvas.height, params);
+                    break;
+            }
+            // Reset filter after drawing
+            ctx.filter = 'none';
+        }
+
+        function getSampledColors(context, width, height) {
+            const points = {
+                topLeft: { x: 0, y: 0 }, topRight: { x: width - 1, y: 0 },
+                bottomRight: { x: width - 1, y: height - 1 }, bottomLeft: { x: 0, y: height - 1 },
+                center: { x: Math.floor(width / 2), y: Math.floor(height / 2) },
+                topCenter: { x: Math.floor(width / 2), y: 0 }, bottomCenter: { x: Math.floor(width / 2), y: height - 1 }
+            };
+            const colors = {};
+            for (const key in points) {
+                const p = context.getImageData(points[key].x, points[key].y, 1, 1).data;
+                colors[key] = { r: p[0], g: p[1], b: p[2] };
+            }
+            return colors;
+        }
+        
+        // --- Drawing Algorithms ---
+
+        function drawRadialAlgorithm(context, width, height, params) {
+            const locations = [
+                { x: 0, y: 0, color: sampledColors.topLeft }, { x: width, y: 0, color: sampledColors.topRight },
+                { x: width, y: height, color: sampledColors.bottomRight }, { x: 0, y: height, color: sampledColors.bottomLeft },
+                { x: width / 2, y: height / 2, color: sampledColors.center }
+            ];
+            const baseRadius = Math.max(width, height);
+            locations.forEach((loc, index) => {
+                const gradRadius = (index === 4 ? baseRadius * 0.9 : baseRadius * 0.8) * params.radius;
+                const gradient = context.createRadialGradient(loc.x, loc.y, 0, loc.x, loc.y, gradRadius);
+                const { r, g, b } = loc.color;
+                // Note: Opacity for gradients is handled differently than globalAlpha.
+                // We use rgba for the gradient stops.
+                gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${params.opacity})`);
+                gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, width, height);
+            });
+        }
+        
+        function drawLinearAlgorithm(context, width, height, params) {
+            const gradient = context.createLinearGradient(0, 0, 0, height);
+            const { r: r1, g: g1, b: b1 } = sampledColors.topCenter;
+            const { r: r2, g: g2, b: b2 } = sampledColors.bottomCenter;
+            gradient.addColorStop(0, `rgba(${r1}, ${g1}, ${b1}, ${params.opacity})`);
+            gradient.addColorStop(1, `rgba(${r2}, ${g2}, ${b2}, ${params.opacity})`);
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, width, height);
+        }
+
+        function drawStretchAlgorithm(context, width, height, params) {
+            const middleRowY = Math.floor(lastImage.height / 2);
+            const tempStretchCanvas = document.createElement('canvas');
+            tempStretchCanvas.width = lastImage.width;
+            tempStretchCanvas.height = 1;
+            const tempStretchCtx = tempStretchCanvas.getContext('2d');
+            tempStretchCtx.putImageData(tempImageCtx.getImageData(0, middleRowY, lastImage.width, 1), 0, 0);
+            context.globalAlpha = params.opacity;
+            context.drawImage(tempStretchCanvas, 0, 0, width, height);
+            context.globalAlpha = 1.0;
+        }
+
+        function drawFullBlurAlgorithm(context, width, height, params) {
+            context.globalAlpha = params.opacity;
+            context.drawImage(lastImage, 0, 0, width, height);
+            context.globalAlpha = 1.0;
+        }
+
+        function downloadCanvas() {
+            updateAndRedraw(); // Ensure canvas is up-to-date
+            const link = document.createElement('a');
+            link.download = 'gradient-backdrop.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // --- UI State Functions ---
+        function updateControlState() {
+            const selectedAlgo = document.querySelector('input[name="algorithm"]:checked').value;
+            if (selectedAlgo === 'radial') {
+                radiusControl.style.opacity = '1';
+                radiusSlider.disabled = false;
+            } else {
+                radiusControl.style.opacity = '0.5';
+                radiusSlider.disabled = true;
+            }
+        }
+        
+        function showLoading() {
+            loadingSpinner.classList.remove('hidden');
+            uploadArea.classList.add('hidden');
+            canvasContainer.classList.remove('hidden');
+            controls.classList.add('hidden');
+            generatorControls.classList.add('hidden');
+        }
+
+        function hideLoading() {
+            loadingSpinner.classList.add('hidden');
+        }
+        
+        function showCanvasAndControls() {
+            canvasContainer.classList.remove('hidden');
+            controls.classList.remove('hidden');
+            generatorControls.classList.remove('hidden');
+            uploadArea.classList.add('hidden');
+            updateControlState(); // Set initial control state
+        }
+
+        function resetUI() {
+            uploadArea.classList.remove('hidden');
+            canvasContainer.classList.add('hidden');
+            controls.classList.add('hidden');
+            generatorControls.classList.add('hidden');
+            imageUpload.value = '';
+            lastImage = null;
+        }
+    </script>
+</body>
+</html>
