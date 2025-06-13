@@ -90,7 +90,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+    <div class="w-full max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Image to Gradient Backdrop</h1>
         <p class="text-center text-gray-500 mb-8">Upload an image and use the controls to create a unique gradient.</p>
 
@@ -180,6 +180,14 @@
                     </div>
                     <input id="saturation-slider" type="range" min="0" max="200" step="1" value="100">
                 </div>
+                 <!-- Contrast Control -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label for="contrast-slider" class="block text-sm font-medium text-gray-700">Contrast</label>
+                        <span id="contrast-value" class="text-sm font-mono text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-300">100%</span>
+                    </div>
+                    <input id="contrast-slider" type="range" min="0" max="200" step="1" value="100">
+                </div>
             </div>
         </div>
 
@@ -212,11 +220,13 @@
         const blurSlider = document.getElementById('blur-slider');
         const hueSlider = document.getElementById('hue-slider');
         const saturationSlider = document.getElementById('saturation-slider');
+        const contrastSlider = document.getElementById('contrast-slider');
         const radiusValue = document.getElementById('radius-value');
         const opacityValue = document.getElementById('opacity-value');
         const blurValue = document.getElementById('blur-value');
         const hueValue = document.getElementById('hue-value');
         const saturationValue = document.getElementById('saturation-value');
+        const contrastValue = document.getElementById('contrast-value');
         
         const ctx = canvas.getContext('2d');
         
@@ -236,7 +246,7 @@
             updateControlState();
             updateAndRedraw();
         });
-        [radiusSlider, opacitySlider, blurSlider, hueSlider, saturationSlider].forEach(slider => {
+        [radiusSlider, opacitySlider, blurSlider, hueSlider, saturationSlider, contrastSlider].forEach(slider => {
             slider.addEventListener('input', updateAndRedraw);
         });
 
@@ -302,7 +312,8 @@
                 opacity: parseFloat(opacitySlider.value),
                 blur: parseInt(blurSlider.value),
                 hue: parseInt(hueSlider.value),
-                saturation: parseInt(saturationSlider.value)
+                saturation: parseInt(saturationSlider.value),
+                contrast: parseInt(contrastSlider.value)
             };
             
             radiusValue.textContent = params.radius.toFixed(2);
@@ -310,13 +321,14 @@
             blurValue.textContent = `${params.blur}px`;
             hueValue.textContent = `${params.hue}°`;
             saturationValue.textContent = `${params.saturation}%`;
+            contrastValue.textContent = `${params.contrast}%`;
 
             const selectedAlgo = document.querySelector('input[name="algorithm"]:checked').value;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Set all filters at once
-            ctx.filter = `blur(${params.blur}px) saturate(${params.saturation}%) hue-rotate(${params.hue}deg)`;
+            // Set all filters at once for better performance
+            ctx.filter = `blur(${params.blur}px) saturate(${params.saturation}%) hue-rotate(${params.hue}deg) contrast(${params.contrast}%)`;
 
             switch (selectedAlgo) {
                 case 'radial':
@@ -332,7 +344,7 @@
                     drawFullBlurAlgorithm(ctx, canvas.width, canvas.height, params);
                     break;
             }
-            // Reset filter after drawing
+            // Reset filter after drawing is complete
             ctx.filter = 'none';
         }
 
@@ -364,8 +376,6 @@
                 const gradRadius = (index === 4 ? baseRadius * 0.9 : baseRadius * 0.8) * params.radius;
                 const gradient = context.createRadialGradient(loc.x, loc.y, 0, loc.x, loc.y, gradRadius);
                 const { r, g, b } = loc.color;
-                // Note: Opacity for gradients is handled differently than globalAlpha.
-                // We use rgba for the gradient stops.
                 gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${params.opacity})`);
                 gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
                 context.fillStyle = gradient;
